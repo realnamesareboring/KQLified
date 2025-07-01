@@ -158,8 +158,8 @@ This project uses **focused documentation** split into specific guides:
 | **[docs/ADDING_CHALLENGES.md](docs/ADDING_CHALLENGES.md)** | Step-by-step challenge creation | Contributors |
 | **[docs/EDUCATOR.md](docs/EDUCATOR.md)** | Pedagogical approach and customization | Educators |
 | **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** | Hosting, CI/CD, performance monitoring | DevOps |
-| **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOT.md)** | Common issues and solutions | Maintainers |
-| **[docs/CONTRIBUTING.md](docs/CONTRIBUTIONS.md)** | Contribution guidelines and standards | Contributors |
+| **[docs/TROUBLESHOOT.md](docs/TROUBLESHOOT.md)** | Common issues and solutions | Maintainers |
+| **[docs/CONTRIBUTIONS.md](docs/CONTRIBUTIONS.md)** | Contribution guidelines and standards | Contributors |
 | **[docs/CONTENT_STANDARDS.md](docs/CONTENT_STANDARDS.md)** | Educational content quality guidelines | Content creators |
 
 **💡 Each document is focused, actionable, and serves a specific need.**
