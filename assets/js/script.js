@@ -1230,3 +1230,265 @@ document.addEventListener('DOMContentLoaded', function() {
 // =============================================================================
 // END: Enhanced Challenge System
 // =============================================================================
+// 🏠 FIXED: Navigate to home page function
+function goHome() {
+    console.log('🏠 goHome() function called');
+    
+    try {
+        // Hide challenge panel, show overview
+        const challengePanel = document.getElementById('challenge-panel');
+        const overviewPanel = document.getElementById('overview-panel');
+        
+        if (challengePanel) {
+            challengePanel.classList.remove('active');
+            challengePanel.style.display = 'none';
+        }
+        
+        if (overviewPanel) {
+            overviewPanel.style.display = 'block';
+        }
+        
+        // Clear any selected scenarios in sidebar
+        document.querySelectorAll('.attack-path').forEach(path => {
+            path.classList.remove('selected');
+        });
+        
+        // Reset selected scenario
+        selectedScenario = null;
+        
+        // Refresh overview stats (but prevent infinite loops)
+        if (window.refreshOverviewStats && !window.statsUpdateInProgress) {
+            console.log('🔄 Refreshing overview stats');
+            window.refreshOverviewStats();
+        }
+        
+        // Close sidebar on mobile
+        if (window.innerWidth <= 768) {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            if (sidebar && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        }
+        
+        // Scroll to top smoothly
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        console.log('✅ Successfully navigated to home page');
+        
+    } catch (error) {
+        console.error('❌ Error in goHome() function:', error);
+    }
+}
+
+// Make sure function is globally available
+window.goHome = goHome;
+
+// 🔍 SIMPLE: Post-Load Tooltip System (No navigation-generator changes needed)
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        initializeChallengeTooltips();
+    }, 2000); // Wait for navigation to load
+});
+
+function initializeChallengeTooltips() {
+    console.log('🔍 Initializing challenge tooltips...');
+    
+    // Don't add tooltips on mobile
+    if (window.innerWidth <= 768) {
+        console.log('📱 Mobile detected, skipping tooltips');
+        return;
+    }
+    
+    const challengePaths = document.querySelectorAll('.attack-path');
+    console.log(`📋 Found ${challengePaths.length} challenges to add tooltips to`);
+    
+    challengePaths.forEach(path => {
+        // Get challenge info from the element
+        const titleElement = path.querySelector('.attack-path-title');
+        if (!titleElement) return;
+        
+        const challengeTitle = titleElement.textContent.trim();
+        const challengeId = getChallengeIdFromTitle(challengeTitle);
+        
+        // Add hover events
+        path.addEventListener('mouseenter', function(e) {
+            showSimpleTooltip(challengeId, challengeTitle, this);
+        });
+        
+        path.addEventListener('mouseleave', function(e) {
+            hideSimpleTooltip();
+        });
+        
+        console.log(`✅ Added tooltip to: ${challengeTitle}`);
+    });
+}
+
+// Convert title back to ID (reverse engineering)
+function getChallengeIdFromTitle(title) {
+    const idMap = {
+        'Password Spray Attack Detection': 'password-spray',
+        'Brute Force Attack Analysis': 'brute-force',
+        'Account Takeover Investigation': 'account-takeover',
+        'MFA Bypass Detection': 'mfa-bypass',
+        'Legacy Authentication Abuse': 'legacy-auth',
+        'Phishing & BEC Analysis': 'phishing-bec'
+    };
+    
+    return idMap[title] || title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
+// Simple tooltip system
+let currentTooltip = null;
+
+function showSimpleTooltip(challengeId, challengeTitle, element) {
+    try {
+        // Remove existing tooltip
+        hideSimpleTooltip();
+        
+        // Get tooltip content
+        const content = getSimpleTooltipContent(challengeId, challengeTitle);
+        
+        // Create tooltip
+        const tooltip = document.createElement('div');
+        tooltip.className = 'challenge-tooltip';
+        tooltip.innerHTML = content;
+        
+        // Add to page
+        document.body.appendChild(tooltip);
+        
+        // Position tooltip
+        positionSimpleTooltip(tooltip, element);
+        
+        // Show with animation
+        setTimeout(() => {
+            tooltip.classList.add('show');
+        }, 50);
+        
+        currentTooltip = tooltip;
+        
+        console.log(`💡 Showing tooltip for: ${challengeTitle}`);
+        
+    } catch (error) {
+        console.warn('⚠️ Error showing tooltip:', error);
+    }
+}
+
+function hideSimpleTooltip() {
+    if (currentTooltip) {
+        currentTooltip.classList.remove('show');
+        setTimeout(() => {
+            if (currentTooltip && currentTooltip.parentNode) {
+                currentTooltip.parentNode.removeChild(currentTooltip);
+            }
+            currentTooltip = null;
+        }, 300);
+    }
+}
+
+function positionSimpleTooltip(tooltip, element) {
+    const rect = element.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    
+    // Position to the right of the element
+    let left = rect.right + scrollLeft + 15;
+    let top = rect.top + scrollTop;
+    
+    // Adjust if tooltip would go off screen
+    if (left + 280 > window.innerWidth) { // 280px is tooltip width
+        left = rect.left + scrollLeft - 280 - 15;
+    }
+    
+    if (top + 200 > window.innerHeight + scrollTop) { // 200px estimated height
+        top = window.innerHeight + scrollTop - 200 - 20;
+    }
+    
+    tooltip.style.position = 'absolute';
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+}
+
+function getSimpleTooltipContent(challengeId, challengeTitle) {
+    // Check if coming soon (simple check)
+    const isComingSoon = challengeTitle.includes('Challenge Not Found') || 
+                        !['password-spray', 'brute-force'].includes(challengeId);
+    
+    if (isComingSoon) {
+        return `
+            <div style="text-align: center;">
+                <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">🚧</div>
+                <div style="font-weight: 600; margin-bottom: 0.5rem;">Coming Soon</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">
+                    This challenge is currently in development.<br>
+                    Check back soon for updates!
+                </div>
+            </div>
+        `;
+    }
+    
+    // Available challenge previews
+    const previews = {
+        'password-spray': `
+            <div style="font-weight: 600; font-size: 1rem; margin-bottom: 0.75rem; color: #81c784;">
+                🎯 Password Spray Attack Detection
+            </div>
+            <div style="display: flex; gap: 1rem; margin-bottom: 0.75rem; font-size: 0.85rem;">
+                <span>⏱️ 15-20 min</span>
+                <span>🏆 250 XP</span>
+                <span>📊 Beginner</span>
+            </div>
+            <div style="margin-bottom: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">💡 What You'll Learn:</div>
+                <div style="font-size: 0.85rem; line-height: 1.4;">
+                    • IP-based attack analysis<br>
+                    • Aggregation functions<br>
+                    • User behavior correlation<br>
+                    • Threshold-based detection
+                </div>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+                <strong>🔍 Scenario:</strong> Detect attackers targeting multiple users with common passwords
+            </div>
+        `,
+        'brute-force': `
+            <div style="font-weight: 600; font-size: 1rem; margin-bottom: 0.75rem; color: #81c784;">
+                🎯 Brute Force Attack Analysis
+            </div>
+            <div style="display: flex; gap: 1rem; margin-bottom: 0.75rem; font-size: 0.85rem;">
+                <span>⏱️ 10-15 min</span>
+                <span>🏆 200 XP</span>
+                <span>📊 Beginner</span>
+            </div>
+            <div style="margin-bottom: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">💡 What You'll Learn:</div>
+                <div style="font-size: 0.85rem; line-height: 1.4;">
+                    • User-focused analysis<br>
+                    • High-volume attack detection<br>
+                    • Attack pattern recognition<br>
+                    • Time-based correlation
+                </div>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+                <strong>🔍 Scenario:</strong> Identify sustained password attacks against specific accounts
+            </div>
+        `
+    };
+    
+    return previews[challengeId] || `
+        <div style="text-align: center;">
+            <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">🎯</div>
+            <div style="font-weight: 600; margin-bottom: 0.5rem;">${challengeTitle}</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">
+                Advanced KQL security challenge<br>
+                with hands-on scenarios and expert guidance
+            </div>
+        </div>
+    `;
+}
+
+// Clean up tooltips when navigating
+window.addEventListener('beforeunload', hideSimpleTooltip);
+
+console.log('✅ Simple tooltip system loaded');

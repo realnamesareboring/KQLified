@@ -50,8 +50,11 @@ class DataLoader {
                 console.log(`✅ Using cached challenge data for: ${challengeId}`);
                 return this.challengeCache.get(challengeId);
             }
-
-            console.log(`🔄 Loading individual challenge: ${challengeId}`);
+            // 🔇 SUPPRESS: Only log for available challenges
+            const isComingSoon = this.isComingSoonChallenge(challengeId);
+            if (!isComingSoon) {
+                console.log(`🔄 Loading individual challenge: ${challengeId}`);
+        }
             
             // Load challenge-specific JSON file
             const challengeResponse = await fetch(`assets/data/scenarios/${challengeId}/${challengeId}.json`);
@@ -72,8 +75,11 @@ class DataLoader {
             return challengeData;
             
         } catch (error) {
-            console.error(`❌ Failed to load challenge '${challengeId}':`, error);
-            
+            // 🔇 SUPPRESS: Don't log errors for coming-soon challenges
+            if (!this.isComingSoonChallenge(challengeId)) {
+                console.error(`❌ Failed to load challenge '${challengeId}':`, error);
+            }
+
             // Return fallback challenge data
             return {
                 challengeId: challengeId,
@@ -94,6 +100,32 @@ class DataLoader {
             };
         }
     }
+
+    // 🔇 NEW: Helper to check if challenge is coming soon
+isComingSoonChallenge(challengeId) {
+    try {
+        // Check if challenge is marked as coming-soon in scenarios.json
+        if (!this.navigationConfig) return false;
+        
+        for (const platform of Object.values(this.navigationConfig.platforms)) {
+            const challenge = platform.challenges?.find(c => c.id === challengeId);
+            if (challenge && challenge.status === 'coming-soon') {
+                return true;
+            }
+        }
+        return false;
+    } catch (error) {
+        return false;
+    }
+}
+
+// 🔇 NEW: Format challenge title from ID
+formatChallengeTitle(challengeId) {
+    return challengeId
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
 
     // =============================================================================
     // ENHANCED: Scenario Data Loading (Combines Navigation + Challenge Data)

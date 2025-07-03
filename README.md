@@ -7,6 +7,19 @@
 
 ![Platform Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen) ![License](https://img.shields.io/badge/license-GNUGPLv3-blue) ![Jekyll](https://img.shields.io/badge/Built%20with-Jekyll-red)
 
+### Fixed
+- **CRITICAL**: Infinite loop in overview stats refresh system
+- Home button functionality and navigation
+- goHome() function definition and global availability
+- Console spam from 404 errors on coming-soon challenges
+- Mobile sidebar behavior after home navigation
+
+### Added
+- Auto-redirect to home page after challenge completion
+- Home button in header navigation with hover effects
+- Completion success banner on home page
+- Enhanced completion animations and user feedback
+
 ## 🚀 Quick Start
 
 ```bash

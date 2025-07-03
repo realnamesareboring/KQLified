@@ -338,6 +338,14 @@ class NavigationGenerator {
 // =============================================================================
 
 async function updateOverviewStats() {
+    // 🛑 CRITICAL FIX: Prevent infinite loops
+    if (window.statsUpdateInProgress) {
+        console.log('⚠️ Stats update already in progress, skipping...');
+        return;
+    }
+    
+    window.statsUpdateInProgress = true;
+
     try {
         console.log('🔄 Updating overview panel stats...');
         
@@ -371,6 +379,9 @@ async function updateOverviewStats() {
         
     } catch (error) {
         console.warn('⚠️ Could not update overview stats:', error);
+    } finally {
+    // 🛑 CRITICAL: Always clear the flag
+    window.statsUpdateInProgress = false;
     }
 }
 

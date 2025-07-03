@@ -13,7 +13,11 @@
     <header class="header">
         <div class="header-left">
             <button class="hamburger" onclick="toggleSidebar()">☰</button>
-            <h1>KQL Security Training Platform</h1>
+            <h1 onclick="goHome()" style="cursor: pointer; transition: all 0.2s ease;" 
+                onmouseover="this.style.opacity='0.8'" 
+                onmouseout="this.style.opacity='1'">KQL Security Training Platform</h1>
+        <!-- 🏠 NEW: Dedicated Home Button -->
+        <button class="btn-home" onclick="goHome()" title="Return to Home">🏠</button>
         </div>
         <div class="rank-system">
             <div class="rank-info">

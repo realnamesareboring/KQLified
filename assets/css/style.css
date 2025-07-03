@@ -2150,3 +2150,71 @@ main {
         border-left-width: 6px;
     }
 }
+/* 🏠 NEW: Home redirect animations */
+@keyframes slideDownBounce {
+    0% {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    60% {
+        opacity: 1;
+        transform: translateY(5px) scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+/* 🔍 Simple Challenge Tooltip */
+.challenge-tooltip {
+    position: absolute;
+    background: linear-gradient(135deg, #2c5aa0 0%, #1e3d6f 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    width: 280px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    transform: translateX(-10px) scale(0.95);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.challenge-tooltip.show {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+}
+
+.challenge-tooltip::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 20px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid #2c5aa0;
+}
+
+/* Hide on mobile */
+@media (max-width: 768px) {
+    .challenge-tooltip {
+        display: none !important;
+    }
+}

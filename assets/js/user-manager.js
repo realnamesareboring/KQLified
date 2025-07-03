@@ -238,40 +238,114 @@ class UserManager {
         }, 3000);
     }
 
-    // Enhanced completion with recovery code generation + stats refresh
-    completeScenario(scenarioName, xpReward) {
-        console.log('🎓 completeScenario called:', scenarioName, 'XP:', xpReward);
+// Enhanced completion with recovery code generation + stats refresh + home redirect
+completeScenario(scenarioName, xpReward) {
+    console.log('🎓 completeScenario called:', scenarioName, 'XP:', xpReward);
+    
+    const completed = this.getCompletedScenarios();
+    
+    if (!completed.includes(scenarioName)) {
+        console.log('✅ New scenario completion detected');
+        completed.push(scenarioName);
+        localStorage.setItem('kql_scenarios_completed', JSON.stringify(completed));
         
-        const completed = this.getCompletedScenarios();
+        // Award XP
+        this.addXP(xpReward, scenarioName);
         
-        if (!completed.includes(scenarioName)) {
-            console.log('✅ New scenario completion detected');
-            completed.push(scenarioName);
-            localStorage.setItem('kql_scenarios_completed', JSON.stringify(completed));
-            
-            // Award XP
-            this.addXP(xpReward, scenarioName);
-            
-            // Generate and show completion code
-            const completionCode = this.generateCompletionCode(scenarioName);
-            if (completionCode) {
-                setTimeout(() => {
-                    this.showCompletionCodeModal(scenarioName, completionCode);
-                }, 2000); // Show after XP animation
-            }
-            
-            markScenarioCompleted(scenarioName);
-            
-            // 🎯 NEW: Refresh overview stats
-            if (window.refreshOverviewStats) {
-                window.refreshOverviewStats();
-            }
-            
-        } else {
-            console.log('⚠️ Scenario already completed, no XP awarded');
+        // Generate and show completion code
+        const completionCode = this.generateCompletionCode(scenarioName);
+        if (completionCode) {
+            setTimeout(() => {
+                this.showCompletionCodeModal(scenarioName, completionCode);
+            }, 2000); // Show after XP animation
         }
+        
+        markScenarioCompleted(scenarioName);
+        
+        // 🎯 NEW: Refresh overview stats
+        if (window.refreshOverviewStats) {
+            window.refreshOverviewStats();
+        }
+        
+        // 🏠 NEW: Auto-redirect to home page after completion
+        setTimeout(() => {
+            this.redirectToHomeAfterCompletion(scenarioName, xpReward);
+        }, 5000); // Wait for completion code modal + user interaction
+        
+    } else {
+        console.log('⚠️ Scenario already completed, no XP awarded');
     }
+}
 
+// 🏠 NEW: Helper function for home redirect
+redirectToHomeAfterCompletion(scenarioName, xpReward) {
+    console.log('🏠 Redirecting to home page after completion');
+    
+    // Close any open modals
+    const modals = document.querySelectorAll('.rankup-modal-overlay, .welcome-modal-overlay');
+    modals.forEach(modal => modal.remove());
+    
+    // Switch back to overview panel
+    document.getElementById('challenge-panel').classList.remove('active');
+    document.getElementById('overview-panel').style.display = 'block';
+    
+    // Update stats to show new completion
+    if (window.refreshOverviewStats) {
+        window.refreshOverviewStats();
+    }
+    
+    // Clear any selected scenarios in sidebar
+    document.querySelectorAll('.attack-path').forEach(path => {
+        path.classList.remove('selected');
+    });
+    
+    // Show success message on home page
+    this.showHomeSuccessMessage(scenarioName, xpReward);
+    
+    // Close sidebar on mobile
+    if (window.innerWidth <= 768 && document.querySelector('.sidebar').classList.contains('active')) {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+    }
+}
+
+// 🏠 NEW: Success message on home page
+showHomeSuccessMessage(scenarioName, xpReward) {
+    const successBanner = document.createElement('div');
+    successBanner.className = 'completion-success-banner';
+    successBanner.innerHTML = `
+        <div style="background: linear-gradient(135deg, #4caf50 0%, #81c784 100%); 
+                    color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;
+                    text-align: center; animation: slideDownBounce 0.6s ease;
+                    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);">
+            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎉</div>
+            <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem;">
+                ${scenarioName.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} Completed!
+            </div>
+            <div style="font-size: 1rem; opacity: 0.9;">
+                You earned <strong>${xpReward} XP</strong>. Choose your next challenge below! 🚀
+            </div>
+        </div>
+    `;
+    
+    const overviewPanel = document.getElementById('overview-panel');
+    const firstChild = overviewPanel.firstElementChild;
+    overviewPanel.insertBefore(successBanner, firstChild);
+    
+    // Auto-remove after 8 seconds
+    setTimeout(() => {
+        const banner = document.querySelector('.completion-success-banner');
+        if (banner) {
+            banner.style.animation = 'slideUpFade 0.5s ease';
+            setTimeout(() => banner.remove(), 500);
+        }
+    }, 8000);
+    
+    // Scroll to top of page smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
     // Generate scenario completion codes
     generateCompletionCode(scenarioId) {
         const baseCode = this.scenarioCodes[scenarioId];
