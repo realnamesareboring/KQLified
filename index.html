@@ -26,7 +26,7 @@
                 </div>
                 <div class="xp-text">750 / 2000 XP</div>
             </div>
-            <!-- NEW: Recovery System Button -->
+            <!-- Recovery System Button -->
             <button class="btn btn-recovery" onclick="userManager.showRecoveryModal()" title="Progress Recovery & Certificates">
                 🔐
             </button>
@@ -35,143 +35,20 @@
 
     <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
     
+    <!-- ========================================================================= -->
+    <!-- SIMPLIFIED SIDEBAR - Navigation Generated Dynamically from JSON -->
+    <!-- ========================================================================= -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-title">Training Modules</div>
             <div class="sidebar-subtitle">Choose your learning path</div>
         </div>
 
-        <!-- Microsoft 365 Security -->
-        <div class="platform-section">
-            <div class="platform-header" onclick="togglePlatform('microsoft365')">
-                <span><span class="platform-icon">🛡️</span>Microsoft 365 Security</span>
-                <span class="expand-icon" id="expand-microsoft365">▼</span>
-            </div>
-            <div class="attack-paths" id="paths-microsoft365">
-                <div class="attack-path" onclick="selectScenario('password-spray')">
-                    <span class="attack-path-title">Password Spray Attacks</span>
-                    <span class="difficulty-badge difficulty-beginner">Beginner</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('brute-force')">
-                    <span>Brute Force Attacks</span>
-                    <span class="difficulty-badge difficulty-beginner">Beginner</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('account-takeover')">
-                    <span>Account Takeover & Persistence</span>
-                    <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('mfa-bypass')">
-                    <span>MFA Bypass & Fatigue</span>
-                    <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('legacy-auth')">
-                    <span>Legacy Authentication Abuse</span>
-                    <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('phishing-bec')">
-                    <span>Phishing & BEC</span>
-                    <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Azure Platform -->
-        <div class="platform-section">
-            <div class="platform-header" onclick="togglePlatform('azure')">
-                <span><span class="platform-icon">☁️</span>Azure Platform</span>
-                <span class="expand-icon" id="expand-azure">▼</span>
-            </div>
-            <div class="attack-paths" id="paths-azure">
-                <div class="attack-path" onclick="selectScenario('azure-storage-misc')">
-                    <span>Storage Misconfigurations</span>
-                    <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('azure-ransomware')">
-                    <span>Storage Ransomware</span>
-                    <span class="difficulty-badge difficulty-advanced">Advanced</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('aks-compromise')">
-                    <span>AKS Cluster Compromise</span>
-                    <span class="difficulty-badge difficulty-advanced">Advanced</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('cspm-violations')">
-                    <span>CSPM Violations</span>
-                    <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- AWS Platform -->
-        <div class="platform-section">
-            <div class="platform-header" onclick="togglePlatform('aws')">
-                <span><span class="platform-icon">🏗️</span>AWS Platform</span>
-                <span class="expand-icon" id="expand-aws">▼</span>
-            </div>
-            <div class="attack-paths" id="paths-aws">
-                <div class="attack-path" onclick="selectScenario('s3-misconfiguration')">
-                    <span>S3 Bucket Misconfigurations</span>
-                    <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('s3-ransomware')">
-                    <span>S3 Ransomware via SSE-C</span>
-                    <span class="difficulty-badge difficulty-advanced">Advanced</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('iam-compromise')">
-                    <span>IAM Credential Compromise</span>
-                    <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('supply-chain')">
-                    <span>S3 Supply Chain Attacks</span>
-                    <span class="difficulty-badge difficulty-advanced">Advanced</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Kubernetes & Containers -->
-        <div class="platform-section">
-            <div class="platform-header" onclick="togglePlatform('kubernetes')">
-                <span><span class="platform-icon">🚢</span>Kubernetes & Containers</span>
-                <span class="expand-icon" id="expand-kubernetes">▼</span>
-            </div>
-            <div class="attack-paths" id="paths-kubernetes">
-                <div class="attack-path" onclick="selectScenario('k8s-api-compromise')">
-                    <span>API Server Compromise</span>
-                    <span class="difficulty-badge difficulty-advanced">Advanced</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('container-runtime')">
-                    <span>Container Runtime Attacks</span>
-                    <span class="difficulty-badge difficulty-advanced">Advanced</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('k8s-misconfiguration')">
-                    <span>Kubernetes Misconfigurations</span>
-                    <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('network-policy')">
-                    <span>Network Policy Violations</span>
-                    <span class="difficulty-badge difficulty-advanced">Advanced</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Multi-Cloud -->
-        <div class="platform-section">
-            <div class="platform-header" onclick="togglePlatform('multicloud')">
-                <span><span class="platform-icon">🌐</span>Multi-Cloud & Hybrid</span>
-                <span class="expand-icon" id="expand-multicloud">▼</span>
-            </div>
-            <div class="attack-paths" id="paths-multicloud">
-                <div class="attack-path" onclick="selectScenario('credential-reuse')">
-                    <span>Multi-Cloud Credential Reuse</span>
-                    <span class="difficulty-badge difficulty-advanced">Advanced</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('supply-chain-compromise')">
-                    <span>Supply Chain Compromise</span>
-                    <span class="difficulty-badge difficulty-expert">Expert</span>
-                </div>
-                <div class="attack-path" onclick="selectScenario('hybrid-identity')">
-                    <span>Hybrid Identity Bridge Attacks</span>
-                    <span class="difficulty-badge difficulty-advanced">Advanced</span>
-                </div>
+        <!-- Navigation will be generated here by navigation-generator.js -->
+        <div id="dynamic-navigation">
+            <!-- Platforms and challenges generated from scenarios.json -->
+            <div class="navigation-loading">
+                Loading training modules...
             </div>
         </div>
     </aside>
@@ -183,21 +60,21 @@
                 <h1 class="overview-title">Welcome to KQL Security Training</h1>
                 <p class="overview-subtitle">Master threat detection and investigation across Microsoft 365, Azure, AWS, and Kubernetes environments through hands-on KQL queries and real-world scenarios.</p>
                 
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <span class="stat-number">43</span>
+                <div class="stats-grid" id="stats-grid">
+                    <div class="stat-card" data-stat="total-scenarios">
+                        <span class="stat-number">...</span>
                         <div class="stat-label">Training Scenarios</div>
                     </div>
-                    <div class="stat-card">
-                        <span class="stat-number">5</span>
+                    <div class="stat-card" data-stat="platforms">
+                        <span class="stat-number">...</span>
                         <div class="stat-label">Cloud Platforms</div>
                     </div>
-                    <div class="stat-card">
-                        <span class="stat-number">3</span>
+                    <div class="stat-card" data-stat="completed">
+                        <span class="stat-number">...</span>
                         <div class="stat-label">Completed</div>
                     </div>
-                    <div class="stat-card">
-                        <span class="stat-number">750</span>
+                    <div class="stat-card" data-stat="xp">
+                        <span class="stat-number">...</span>
                         <div class="stat-label">XP Earned</div>
                     </div>
                 </div>
@@ -316,7 +193,7 @@
                     </div>
                 </div>
 
-                <!-- Replace the KQL toolbar section in your index.html with this -->
+                <!-- KQL Workspace -->
                 <div class="kql-workspace">
                     <div class="kql-toolbar">
                         <div class="kql-toolbar-left">
@@ -325,7 +202,7 @@
                         </div>
                         <div class="toolbar-actions">
                             <button class="btn btn-primary" onclick="runQuery()">▶ Run Query</button>
-                            <button class="btn btn-secondary" onclick="toggleHint()">💡 Hint</button>
+                            <button class="btn btn-secondary" onclick="toggleEnhancedHint()">💡 Hint</button>
                             <button class="btn btn-warning" onclick="revealSolution()">🔍 Reveal Solution</button>
                         </div>
                     </div>
@@ -349,10 +226,11 @@
             </div>
         </div>
     </main>
-    <!-- Add this line before your existing scripts -->
+
+    <!-- JavaScript - Load in correct order -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <!-- Link to JavaScript file -->
     <script src="assets/js/data-loader.js"></script>
+    <script src="assets/js/navigation-generator.js"></script>
     <script src="assets/js/script.js"></script>
     <script src="assets/js/user-manager.js"></script>
 </body>

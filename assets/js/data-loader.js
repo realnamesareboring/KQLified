@@ -1,53 +1,128 @@
-// Debug Data Loader for Jekyll - Enhanced logging and validation
+// Enhanced Data Loader for Jekyll - JSON-Driven Navigation + Challenge Loading
 class DataLoader {
     constructor() {
         this.scenarios = {};
+        this.navigationConfig = null;
         this.currentScenarioData = null;
         this.currentColumns = [];
+        this.challengeCache = new Map(); // Cache loaded challenges
     }
 
-    async loadScenariosConfig() {
+    // =============================================================================
+    // NEW: Navigation Configuration Loading
+    // =============================================================================
+
+    async loadNavigationConfig() {
         try {
-            console.log('🔄 Loading scenarios config...');
+            console.log('🔄 Loading navigation configuration...');
             const response = await fetch('assets/data/scenarios.json');
             const config = await response.json();
-            this.scenarios = config.scenarios;
-            console.log('✅ Scenarios config loaded:', Object.keys(this.scenarios));
-            return this.scenarios;
+            this.navigationConfig = config;
+            console.log('✅ Navigation config loaded:', {
+                platforms: Object.keys(config.platforms).length,
+                totalChallenges: this.getTotalChallengeCount(config)
+            });
+            return this.navigationConfig;
         } catch (error) {
-            console.error('❌ Failed to load scenarios config:', error);
-            return {};
+            console.error('❌ Failed to load navigation config:', error);
+            return null;
         }
     }
 
-    async loadScenarioData(scenarioId) {
-        const scenario = this.scenarios[scenarioId];
-        if (!scenario) {
-            console.error('❌ Scenario not found:', scenarioId);
-            return null;
-        }
+    getTotalChallengeCount(config) {
+        return Object.values(config.platforms || {}).reduce((total, platform) => {
+            return total + (platform.challenges ? platform.challenges.length : 0);
+        }, 0);
+    }
 
+    getNavigationConfig() {
+        return this.navigationConfig;
+    }
+
+    // =============================================================================
+    // NEW: Individual Challenge Loading
+    // =============================================================================
+
+    async loadIndividualChallenge(challengeId) {
         try {
-            console.log(`🔄 Loading scenario data for: ${scenarioId}`);
+            // Check cache first
+            if (this.challengeCache.has(challengeId)) {
+                console.log(`✅ Using cached challenge data for: ${challengeId}`);
+                return this.challengeCache.get(challengeId);
+            }
+
+            console.log(`🔄 Loading individual challenge: ${challengeId}`);
             
-            // Load CSV data
-            const csvResponse = await fetch(`assets/data/scenarios/${scenarioId}/${scenario.dataFile}`);
+            // Load challenge-specific JSON file
+            const challengeResponse = await fetch(`assets/data/scenarios/${challengeId}/${challengeId}.json`);
+            if (!challengeResponse.ok) {
+                throw new Error(`Challenge file not found: ${challengeResponse.status}`);
+            }
+            const challengeData = await challengeResponse.json();
+            
+            console.log(`✅ Loaded challenge '${challengeId}':`, {
+                title: challengeData.title,
+                difficulty: challengeData.difficulty,
+                hints: challengeData.progressiveHints?.length || 0,
+                walkthrough: challengeData.walkthrough ? 'available' : 'missing'
+            });
+
+            // Cache the challenge data
+            this.challengeCache.set(challengeId, challengeData);
+            return challengeData;
+            
+        } catch (error) {
+            console.error(`❌ Failed to load challenge '${challengeId}':`, error);
+            
+            // Return fallback challenge data
+            return {
+                challengeId: challengeId,
+                title: "Challenge Not Found",
+                difficulty: "beginner",
+                estimatedTime: "Unknown",
+                xpReward: 0,
+                description: "This challenge is not yet available.",
+                progressiveHints: [
+                    {
+                        level: 1,
+                        title: "💡 Challenge Unavailable",
+                        content: "This challenge hasn't been implemented yet. Check back soon!",
+                        example: "// Challenge coming soon"
+                    }
+                ],
+                walkthrough: null
+            };
+        }
+    }
+
+    // =============================================================================
+    // ENHANCED: Scenario Data Loading (Combines Navigation + Challenge Data)
+    // =============================================================================
+
+    async loadScenarioData(scenarioId) {
+        try {
+            console.log(`🔄 Loading complete scenario data for: ${scenarioId}`);
+            
+            // 1. Load individual challenge data
+            const challengeData = await this.loadIndividualChallenge(scenarioId);
+            
+            // 2. Load CSV data
+            const csvResponse = await fetch(`assets/data/scenarios/${scenarioId}/${challengeData.dataFile || 'signin-logs.csv'}`);
             if (!csvResponse.ok) {
                 throw new Error(`CSV file not found: ${csvResponse.status}`);
             }
             const csvText = await csvResponse.text();
-            console.log('📄 CSV text loaded, length:', csvText.length);
-            console.log('📄 First 200 chars:', csvText.substring(0, 200));
+            console.log('📄 CSV data loaded, length:', csvText.length);
             
-            // Load KQL solution
-            const kqlResponse = await fetch(`assets/data/scenarios/${scenarioId}/${scenario.solutionFile}`);
+            // 3. Load KQL solution
+            const kqlResponse = await fetch(`assets/data/scenarios/${scenarioId}/${challengeData.solutionFile || 'solution.kql'}`);
             if (!kqlResponse.ok) {
                 throw new Error(`KQL file not found: ${kqlResponse.status}`);
             }
             const kqlText = await kqlResponse.text();
             console.log('📝 KQL solution loaded, length:', kqlText.length);
 
-            // Parse CSV with PapaParse
+            // 4. Parse CSV with PapaParse
             const parsedData = Papa.parse(csvText, {
                 header: true,
                 dynamicTyping: true,
@@ -59,37 +134,55 @@ class DataLoader {
             console.log('  - Rows:', parsedData.data.length);
             console.log('  - Columns:', parsedData.meta.fields);
             console.log('  - Errors:', parsedData.errors);
-            console.log('  - Sample row:', parsedData.data[0]);
 
-            // Store data for current scenario
+            // 5. Create unified scenario data structure
             this.currentScenarioData = {
+                // Challenge metadata from individual JSON file
+                ...challengeData,
+                
+                // CSV data
                 rows: parsedData.data,
                 columns: parsedData.meta.fields.map(field => field.trim()),
+                
+                // KQL solution
                 solution: kqlText.trim(),
-                metadata: scenario
+                
+                // Legacy metadata structure for backward compatibility
+                metadata: {
+                    title: challengeData.title,
+                    platform: challengeData.platform,
+                    difficulty: challengeData.difficulty,
+                    duration: challengeData.estimatedTime,
+                    points: challengeData.xpReward + ' XP',
+                    description: challengeData.description,
+                    hint: challengeData.progressiveHints?.[0]?.content || "No hint available",
+                    tableName: challengeData.tableName || 'SigninLogs',
+                    xpReward: challengeData.xpReward
+                }
             };
 
-            console.log(`✅ Loaded scenario '${scenarioId}':`, {
+            console.log(`✅ Complete scenario loaded for '${scenarioId}':`, {
                 rows: this.currentScenarioData.rows.length,
                 columns: this.currentScenarioData.columns.length,
-                solutionLines: this.currentScenarioData.solution.split('\n').length
+                hints: this.currentScenarioData.progressiveHints?.length || 0,
+                walkthrough: this.currentScenarioData.walkthrough ? 'available' : 'missing'
             });
 
-            // Debug: Show some sample data
-            console.log('🔍 Sample data analysis:');
-            const failedLogins = this.currentScenarioData.rows.filter(row => 
-                row.ResultType && row.ResultType !== 0 && row.ResultType !== '0'
-            );
-            console.log('  - Total rows:', this.currentScenarioData.rows.length);
-            console.log('  - Failed logins:', failedLogins.length);
-            console.log('  - ResultType values:', [...new Set(this.currentScenarioData.rows.map(r => r.ResultType))]);
-            console.log('  - Sample failed login:', failedLogins[0]);
-
             return this.currentScenarioData;
+            
         } catch (error) {
             console.error(`❌ Failed to load scenario data for '${scenarioId}':`, error);
             return null;
         }
+    }
+
+    // =============================================================================
+    // BACKWARD COMPATIBILITY: Legacy Functions
+    // =============================================================================
+
+    async loadScenariosConfig() {
+        // Maintain backward compatibility - just load navigation config
+        return await this.loadNavigationConfig();
     }
 
     getCurrentData() {
@@ -97,10 +190,19 @@ class DataLoader {
     }
 
     getScenarioMetadata(scenarioId) {
+        // Try to get from current loaded scenario first
+        if (this.currentScenarioData && this.currentScenarioData.challengeId === scenarioId) {
+            return this.currentScenarioData.metadata;
+        }
+        
+        // Fallback to legacy scenarios object (if it exists)
         return this.scenarios[scenarioId] || null;
     }
 
-    // Generate dynamic table HTML based on loaded data
+    // =============================================================================
+    // EXISTING: Query Execution Engine (Unchanged)
+    // =============================================================================
+
     generateTableHTML(data, maxRows = 100) {
         if (!data || !data.rows || !data.columns) {
             return '<p>No data available</p>';
@@ -120,18 +222,15 @@ class DataLoader {
         `;
 
         displayRows.forEach((row, index) => {
-            // Determine row styling based on content
             let rowClass = '';
             let ipClass = '';
             
-            // Check for failed logins (common pattern)
             if (row.ResultType && row.ResultType !== 0 && row.ResultType !== '0') {
                 rowClass = 'log-failed';
             } else if (row.ResultType === 0 || row.ResultType === '0') {
                 rowClass = 'log-success';
             }
             
-            // Check for suspicious IPs (common spray patterns)
             if (row.IPAddress && (row.IPAddress.includes('203.0.113.') || row.IPAddress.includes('198.51.100.'))) {
                 rowClass = 'log-spray-ip';
                 ipClass = 'suspicious-ip';
@@ -143,7 +242,6 @@ class DataLoader {
                 let cellValue = row[col] || '';
                 let cellClass = '';
                 
-                // Special formatting for specific columns
                 if (col === 'IPAddress' && ipClass) {
                     cellClass = ipClass;
                 } else if (col === 'ResultType') {
@@ -170,7 +268,6 @@ class DataLoader {
         return html;
     }
 
-    // Execute KQL-like query on loaded data
     executeQuery(queryText, data = null) {
         const dataset = data || this.currentScenarioData;
         if (!dataset || !dataset.rows) {
@@ -194,14 +291,12 @@ class DataLoader {
         }
     }
 
-    // Basic KQL query execution (simplified) - Enhanced with debugging
     executeBasicKQLQuery(query, dataset) {
         const { rows } = dataset;
         let processedData = [...rows];
 
         console.log('🔄 Starting query execution with', processedData.length, 'rows');
 
-        // Remove comments and normalize query
         const lines = query.split('\n')
             .map(line => line.trim())
             .filter(line => line && !line.startsWith('//'));
@@ -225,7 +320,6 @@ class DataLoader {
                             return isNonZero;
                         });
                         console.log(`  Filtered ResultType != 0: ${beforeCount} → ${processedData.length}`);
-                        console.log(`  Sample ResultTypes after filter:`, processedData.slice(0, 3).map(r => r.ResultType));
                     }
                 });
             }
@@ -240,6 +334,7 @@ class DataLoader {
                 console.log('  Group by field:', groupByField);
                 
                 if (groupByField && (groupByField.includes('ipaddress') || groupByField.includes('location'))) {
+                    // Password spray analysis (group by IP)
                     console.log('🔄 Grouping by IP address...');
                     const grouped = {};
                     processedData.forEach(row => {
@@ -259,7 +354,6 @@ class DataLoader {
                         grouped[ip].TargetedUsers.push(row.UserPrincipalName);
                         grouped[ip].FailedAttempts++;
                         
-                        // Track time range
                         if (row.TimeGenerated < grouped[ip].FirstAttempt) {
                             grouped[ip].FirstAttempt = row.TimeGenerated;
                         }
@@ -268,12 +362,6 @@ class DataLoader {
                         }
                     });
 
-                    console.log('📊 Grouped results:', Object.keys(grouped).length, 'unique IPs');
-                    Object.entries(grouped).forEach(([ip, data]) => {
-                        console.log(`  ${ip}: ${data.UniqueUsers.size} users, ${data.FailedAttempts} attempts`);
-                    });
-
-                    // Convert to array format with calculated fields
                     processedData = Object.values(grouped).map(group => ({
                         IPAddress: group.IPAddress,
                         Location: group.Location,
@@ -282,11 +370,47 @@ class DataLoader {
                         AverageAttemptsPerUser: Math.round((group.FailedAttempts / group.UniqueUsers.size) * 10) / 10,
                         FirstAttempt: group.FirstAttempt,
                         LastAttempt: group.LastAttempt,
-                        TargetedUsers: [...new Set(group.TargetedUsers)].slice(0, 5) // Show first 5 users
+                        TargetedUsers: [...new Set(group.TargetedUsers)].slice(0, 5)
                     }));
                     
-                    console.log('📊 After summarize:', processedData.length, 'grouped results');
+                } else if (groupByField && groupByField.includes('userprincipalname')) {
+                    // Brute force analysis (group by user)
+                    console.log('🔄 Grouping by User...');
+                    const grouped = {};
+                    processedData.forEach(row => {
+                        const user = row.UserPrincipalName;
+                        if (!grouped[user]) {
+                            grouped[user] = {
+                                UserPrincipalName: user,
+                                FailedAttempts: 0,
+                                SourceIPs: new Set(),
+                                FirstAttempt: row.TimeGenerated,
+                                LastAttempt: row.TimeGenerated
+                            };
+                        }
+                        grouped[user].FailedAttempts++;
+                        grouped[user].SourceIPs.add(row.IPAddress);
+                        
+                        if (row.TimeGenerated < grouped[user].FirstAttempt) {
+                            grouped[user].FirstAttempt = row.TimeGenerated;
+                        }
+                        if (row.TimeGenerated > grouped[user].LastAttempt) {
+                            grouped[user].LastAttempt = row.TimeGenerated;
+                        }
+                    });
+
+                    processedData = Object.values(grouped).map(group => ({
+                        UserPrincipalName: group.UserPrincipalName,
+                        FailedAttempts: group.FailedAttempts,
+                        UniqueIPs: group.SourceIPs.size,
+                        SourceIPs: [...group.SourceIPs].slice(0, 5),
+                        FirstAttempt: group.FirstAttempt,
+                        LastAttempt: group.LastAttempt,
+                        AttackDuration: group.LastAttempt + ' - ' + group.FirstAttempt
+                    }));
                 }
+                
+                console.log('📊 After summarize:', processedData.length, 'grouped results');
             }
         }
 
@@ -295,6 +419,13 @@ class DataLoader {
             console.log('🔍 Filtering UniqueUsers >= 5...');
             const beforeCount = processedData.length;
             processedData = processedData.filter(row => row.UniqueUsers >= 5);
+            console.log(`  Threshold filter: ${beforeCount} → ${processedData.length}`);
+        }
+
+        if (queryText.includes('failedattempts >= 10')) {
+            console.log('🔍 Filtering FailedAttempts >= 10...');
+            const beforeCount = processedData.length;
+            processedData = processedData.filter(row => row.FailedAttempts >= 10);
             console.log(`  Threshold filter: ${beforeCount} → ${processedData.length}`);
         }
 
@@ -323,24 +454,14 @@ class DataLoader {
         return processedData;
     }
 
-    // Check if query matches expected solution patterns
     validateQuery(userQuery, scenarioId) {
         console.log('🔍 Validating query for scenario:', scenarioId);
         
-        const scenario = this.scenarios[scenarioId];
-        if (!scenario) {
-            console.error('❌ Scenario not found for validation');
-            return { valid: false, message: 'Scenario not found' };
+        if (!this.currentScenarioData) {
+            console.error('❌ No scenario data available for validation');
+            return { valid: false, message: 'No scenario data available' };
         }
 
-        const solution = this.currentScenarioData?.solution;
-        if (!solution) {
-            console.error('❌ No solution available for validation');
-            return { valid: false, message: 'No solution available' };
-        }
-
-        // Execute user query
-        console.log('🔄 Executing user query...');
         const userResults = this.executeQuery(userQuery);
         if (!userResults.success) {
             console.error('❌ User query execution failed');
@@ -349,14 +470,16 @@ class DataLoader {
 
         console.log('📊 User query results:', userResults.data.length, 'rows');
 
-        // Basic validation - check if results meet criteria
         const userResultsData = userResults.data;
-        const expectedCriteria = scenario.expectedResults;
+        const expectedResults = this.currentScenarioData.expectedResults;
 
-        console.log('📋 Expected criteria:', expectedCriteria);
-        console.log('📊 Actual results count:', userResultsData.length);
+        if (!expectedResults) {
+            return { valid: true, message: 'Query executed successfully!' };
+        }
 
-        if (userResultsData.length >= expectedCriteria.minRows) {
+        console.log('📋 Expected criteria:', expectedResults);
+
+        if (userResultsData.length >= (expectedResults.minRows || 1)) {
             console.log('✅ Query validation successful!');
             return { 
                 valid: true, 
@@ -367,7 +490,7 @@ class DataLoader {
             console.log('❌ Query validation failed - insufficient results');
             return { 
                 valid: false, 
-                message: `Expected at least ${expectedCriteria.minRows} results, got ${userResultsData.length}` 
+                message: `Expected at least ${expectedResults.minRows || 1} results, got ${userResultsData.length}` 
             };
         }
     }

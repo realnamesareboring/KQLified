@@ -1,190 +1,246 @@
 {
-  "scenarios": {
-    "password-spray": {
-      "title": "Password Spray Attack Detection",
-      "platform": "Microsoft Entra ID",
-      "difficulty": "Beginner - Intermediate",
-      "duration": "15-20 minutes",
-      "points": 250,
-      "xpReward": 250,
-      "description": "<strong>Scenario:</strong> A Security Operations Center has detected unusual authentication patterns across multiple user accounts. Your task is to identify a potential password spray attack using KQL queries against Microsoft Entra ID sign-in logs.<br><br><strong>Learning Objectives:</strong> Master aggregation functions, time windows, IP address analysis, and user behavior correlation.<br><br><strong>Data Sources:</strong> SigninLogs table from Microsoft Entra ID",
-      "progressiveHints": [
+  "metadata": {
+    "version": "2.0", 
+    "description": "KQL Security Training Platform - Navigation Configuration",
+    "lastUpdated": "2025-01-01",
+    "totalChallenges": 43,
+    "availableChallenges": 2
+  },
+  "platforms": {
+    "microsoft365": {
+      "id": "microsoft365",
+      "name": "Microsoft 365 Security",
+      "icon": "🛡️",
+      "description": "Learn identity protection, email security, and endpoint defense with Entra ID, Defender for Office 365, and more.",
+      "order": 1,
+      "challenges": [
         {
-          "level": 1,
-          "title": "🎯 Start Simple",
-          "content": "Begin by exploring the SigninLogs table. Look for authentication failures by filtering where ResultType is not equal to 0. This will show you all the failed login attempts.",
-          "example": "SigninLogs | where ResultType != 0"
+          "id": "password-spray",
+          "status": "available",
+          "order": 1,
+          "isNew": false,
+          "featured": true
         },
         {
-          "level": 2, 
-          "title": "📊 Group Your Data",
-          "content": "Password spray attacks target multiple users from the same IP address. Use the 'summarize' operator to group failed logins by IP address and count unique users.",
-          "example": "| summarize UniqueUsers = dcount(UserPrincipalName) by IPAddress"
+          "id": "brute-force", 
+          "status": "available",
+          "order": 2,
+          "isNew": true,
+          "featured": false
         },
         {
-          "level": 3,
-          "title": "🔍 Add More Metrics",
-          "content": "Enhance your analysis by adding total failed attempts, the list of targeted users, and time ranges. Use make_set() to collect usernames and min/max for time windows.",
-          "example": "| summarize UniqueUsers = dcount(UserPrincipalName), FailedAttempts = count(), TargetedUsers = make_set(UserPrincipalName) by IPAddress"
+          "id": "account-takeover",
+          "status": "coming-soon",
+          "order": 3,
+          "isNew": false,
+          "featured": false
         },
         {
-          "level": 4,
-          "title": "⚡ Set Thresholds",
-          "content": "Password sprays typically target 5+ users. Add a filter after your summarize to focus on suspicious activity with 'where UniqueUsers >= 5'.",
-          "example": "| where UniqueUsers >= 5"
+          "id": "mfa-bypass",
+          "status": "coming-soon", 
+          "order": 4,
+          "isNew": false,
+          "featured": false
         },
         {
-          "level": 5,
-          "title": "🎯 Final Polish",
-          "content": "Sort your results to show the most suspicious IPs first using 'order by UniqueUsers desc'. Also consider adding time windows and calculating attack duration for complete analysis.",
-          "example": "| order by UniqueUsers desc, FailedAttempts desc"
+          "id": "legacy-auth",
+          "status": "coming-soon",
+          "order": 5,
+          "isNew": false,
+          "featured": false
+        },
+        {
+          "id": "phishing-bec",
+          "status": "coming-soon",
+          "order": 6,
+          "isNew": false,
+          "featured": false
         }
-      ],
-      "walkthrough": {
-        "title": "🧠 Understanding the Password Spray Detection Query",
-        "introduction": "Let's break down this KQL query step by step to understand how it detects password spray attacks:",
-        "steps": [
-          {
-            "operator": "SigninLogs",
-            "explanation": "This specifies our data source - the Microsoft Entra ID sign-in logs table containing authentication events.",
-            "purpose": "Starting point for our analysis"
-          },
-          {
-            "operator": "| where TimeGenerated > ago(24h)",
-            "explanation": "Filters events to only the last 24 hours. The 'ago()' function calculates time relative to now.",
-            "purpose": "Focus on recent attack activity"
-          },
-          {
-            "operator": "| where ResultType != 0",
-            "explanation": "Filters for failed authentication attempts. ResultType 0 = success, any other value = failure.",
-            "purpose": "Only analyze failed login attempts"
-          },
-          {
-            "operator": "| summarize",
-            "explanation": "Groups and aggregates data based on specified fields. This is the core of our analysis.",
-            "purpose": "Transform raw logs into meaningful insights"
-          },
-          {
-            "operator": "UniqueUsers = dcount(UserPrincipalName)",
-            "explanation": "Counts distinct users targeted. 'dcount()' eliminates duplicates, giving us unique user count per IP.",
-            "purpose": "Identify IPs targeting multiple users"
-          },
-          {
-            "operator": "FailedAttempts = count()",
-            "explanation": "Counts total failed attempts per IP address. Simple count of all matching records.",
-            "purpose": "Measure attack intensity"
-          },
-          {
-            "operator": "TargetedUsers = make_set(UserPrincipalName)",
-            "explanation": "Creates an array of all targeted usernames. 'make_set()' collects unique values into a list.",
-            "purpose": "See exactly which users were targeted"
-          },
-          {
-            "operator": "by IPAddress, Location",
-            "explanation": "Groups results by these fields. Each unique combination gets its own summary row.",
-            "purpose": "Separate analysis per attacking IP"
-          },
-          {
-            "operator": "| where UniqueUsers >= 5",
-            "explanation": "Filters for IPs targeting 5+ users. This threshold indicates potential spray attacks.",
-            "purpose": "Focus on suspicious activity patterns"
-          },
-          {
-            "operator": "| order by UniqueUsers desc",
-            "explanation": "Sorts results by unique user count, highest first. 'desc' means descending order.",
-            "purpose": "Show most suspicious IPs at the top"
-          }
-        ],
-        "keyTakeaways": [
-          "🎯 **Pattern Recognition**: Password sprays create a signature of 1 IP → Many Users → Few attempts per user",
-          "📊 **Aggregation Power**: KQL's summarize operator transforms raw logs into actionable intelligence", 
-          "⚡ **Threshold Setting**: Using >= 5 users helps reduce false positives while catching real attacks",
-          "🔍 **Multi-dimensional Analysis**: Combining user count, attempt count, and time windows provides complete picture"
-        ]
-      },
-      "dataFile": "signin-logs.csv",
-      "solutionFile": "solution.kql",
-      "tableName": "SigninLogs",
-      "expectedResults": {
-        "minRows": 1,
-        "suspiciousThreshold": 5,
-        "successCriteria": "Identifies IP addresses targeting multiple users"
-      }
+      ]
     },
-    "brute-force": {
-      "title": "Brute Force Attack Analysis", 
-      "platform": "Microsoft Entra ID",
-      "difficulty": "Beginner",
-      "duration": "10-15 minutes",
-      "points": 200,
-      "xpReward": 200,
-      "description": "<strong>Scenario:</strong> Multiple failed login attempts against a single user account have been detected. Investigate potential brute force attacks targeting high-value accounts.<br><br><strong>Learning Objectives:</strong> Basic filtering, counting operations, and user-focused analysis.<br><br><strong>Data Sources:</strong> SigninLogs table from Microsoft Entra ID",
-      "progressiveHints": [
+    "azure": {
+      "id": "azure",
+      "name": "Azure Platform", 
+      "icon": "☁️",
+      "description": "Master cloud security posture management, storage protection, and Azure Kubernetes Service security.",
+      "order": 2,
+      "challenges": [
         {
-          "level": 1,
-          "title": "🎯 Focus on Failures",
-          "content": "Start by filtering for failed login attempts using ResultType != 0, then focus on a specific user account to analyze their failed attempts.",
-          "example": "SigninLogs | where ResultType != 0"
+          "id": "azure-storage-misc",
+          "status": "coming-soon",
+          "order": 1,
+          "isNew": false,
+          "featured": false
         },
         {
-          "level": 2,
-          "title": "👤 Target Specific Users", 
-          "content": "Look for patterns where a single user has many failed attempts. Use 'summarize' to count failures per user account.",
-          "example": "| summarize FailedAttempts = count() by UserPrincipalName"
+          "id": "azure-ransomware",
+          "status": "coming-soon", 
+          "order": 2,
+          "isNew": false,
+          "featured": false
         },
         {
-          "level": 3,
-          "title": "📊 Add Time Analysis",
-          "content": "Brute force attacks happen over time. Add time windows and source IP information to your analysis.",
-          "example": "| summarize FailedAttempts = count(), IPAddresses = make_set(IPAddress) by UserPrincipalName"
+          "id": "aks-compromise",
+          "status": "coming-soon",
+          "order": 3,
+          "isNew": false,
+          "featured": false
         },
         {
-          "level": 4,
-          "title": "⚡ Set Brute Force Threshold",
-          "content": "Typically 10+ failed attempts indicate brute force. Filter for users with high failure counts.",
-          "example": "| where FailedAttempts >= 10"
-        },
-        {
-          "level": 5,
-          "title": "🎯 Sort and Prioritize",
-          "content": "Order results by failure count to see the most attacked accounts first. This helps prioritize incident response.",
-          "example": "| order by FailedAttempts desc"
+          "id": "cspm-violations",
+          "status": "coming-soon",
+          "order": 4,
+          "isNew": false,
+          "featured": false
         }
-      ],
-      "walkthrough": {
-        "title": "🧠 Understanding Brute Force Detection",
-        "introduction": "This query identifies accounts under brute force attack by analyzing failed login patterns:",
-        "steps": [
-          {
-            "operator": "| where ResultType != 0",
-            "explanation": "Filters for authentication failures only",
-            "purpose": "Focus on failed login attempts"
-          },
-          {
-            "operator": "| summarize FailedAttempts = count()",
-            "explanation": "Counts total failures per user account",
-            "purpose": "Quantify attack intensity per user"
-          },
-          {
-            "operator": "| where FailedAttempts >= 10",
-            "explanation": "Threshold for potential brute force activity",
-            "purpose": "Filter for suspicious activity levels"
-          }
-        ],
-        "keyTakeaways": [
-          "🎯 **Volume Detection**: High failure counts indicate automated attacks",
-          "👤 **User-Centric**: Unlike spray attacks, brute force focuses on specific accounts",
-          "⏰ **Time Patterns**: Real brute force shows rapid, repeated attempts"
-        ]
-      },
-      "dataFile": "signin-logs.csv",
-      "solutionFile": "solution.kql", 
-      "tableName": "SigninLogs",
-      "expectedResults": {
-        "minRows": 1,
-        "suspiciousThreshold": 10,
-        "successCriteria": "Identifies users with excessive failed login attempts"
-      }
+      ]
+    },
+    "aws": {
+      "id": "aws",
+      "name": "AWS Platform",
+      "icon": "🏗️", 
+      "description": "Investigate IAM compromises, S3 security issues, and advanced ransomware techniques targeting AWS services.",
+      "order": 3,
+      "challenges": [
+        {
+          "id": "s3-misconfiguration",
+          "status": "coming-soon",
+          "order": 1,
+          "isNew": false,
+          "featured": false
+        },
+        {
+          "id": "s3-ransomware",
+          "status": "coming-soon",
+          "order": 2,
+          "isNew": false,
+          "featured": true
+        },
+        {
+          "id": "iam-compromise", 
+          "status": "coming-soon",
+          "order": 3,
+          "isNew": false,
+          "featured": false
+        },
+        {
+          "id": "supply-chain",
+          "status": "coming-soon",
+          "order": 4,
+          "isNew": false,
+          "featured": false
+        }
+      ]
+    },
+    "kubernetes": {
+      "id": "kubernetes",
+      "name": "Kubernetes & Containers",
+      "icon": "🚢",
+      "description": "Secure container orchestration with API server protection, runtime security, and network policy enforcement.",
+      "order": 4,
+      "challenges": [
+        {
+          "id": "k8s-api-compromise",
+          "status": "coming-soon",
+          "order": 1,
+          "isNew": false,
+          "featured": false
+        },
+        {
+          "id": "container-runtime",
+          "status": "coming-soon",
+          "order": 2,
+          "isNew": false,
+          "featured": false
+        },
+        {
+          "id": "k8s-misconfiguration",
+          "status": "coming-soon",
+          "order": 3,
+          "isNew": false,
+          "featured": false
+        },
+        {
+          "id": "network-policy",
+          "status": "coming-soon",
+          "order": 4,
+          "isNew": false,
+          "featured": false
+        }
+      ]
+    },
+    "multicloud": {
+      "id": "multicloud",
+      "name": "Multi-Cloud & Hybrid",
+      "icon": "🌐",
+      "description": "Advanced cross-platform investigations and hybrid environment security analysis.",
+      "order": 5,
+      "challenges": [
+        {
+          "id": "credential-reuse",
+          "status": "coming-soon",
+          "order": 1,
+          "isNew": false,
+          "featured": false
+        },
+        {
+          "id": "supply-chain-compromise",
+          "status": "coming-soon",
+          "order": 2,
+          "isNew": false,
+          "featured": false
+        },
+        {
+          "id": "hybrid-identity",
+          "status": "coming-soon",
+          "order": 3,
+          "isNew": false,
+          "featured": false
+        }
+      ]
+    }
+  },
+  "difficultyLevels": {
+    "beginner": {
+      "name": "Beginner",
+      "color": "#4caf50",
+      "description": "New to KQL - basic filtering and counting",
+      "skillLevel": "0-3 months experience"
+    },
+    "intermediate": {
+      "name": "Intermediate",
+      "color": "#ff9800", 
+      "description": "Some KQL knowledge - aggregation and correlation",
+      "skillLevel": "3-12 months experience"
+    },
+    "advanced": {
+      "name": "Advanced",
+      "color": "#f44336",
+      "description": "Experienced with KQL - complex multi-step analysis",
+      "skillLevel": "1+ years experience"
+    },
+    "expert": {
+      "name": "Expert",
+      "color": "#9c27b0",
+      "description": "KQL master - behavioral analytics and novel techniques",
+      "skillLevel": "2+ years experience"
+    }
+  },
+  "statusTypes": {
+    "available": {
+      "name": "Available",
+      "icon": "✅",
+      "description": "Ready to play"
+    },
+    "coming-soon": {
+      "name": "Coming Soon", 
+      "icon": "🚧",
+      "description": "In development"
+    },
+    "beta": {
+      "name": "Beta",
+      "icon": "🧪", 
+      "description": "Testing phase"
     }
   }
 }
